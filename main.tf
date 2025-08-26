@@ -41,16 +41,6 @@ resource "google_container_cluster" "gke" {
   depends_on = [google_project_service.required]
 }
 
-resource "kubernetes_namespace" "tekton" {
-  metadata { name = "tekton" }
-  depends_on = [google_container_cluster.gke]   # ensure cluster exists first
-}
-
-resource "kubernetes_namespace" "application" {
-  metadata { name = "application" }
-  depends_on = [google_container_cluster.gke]
-}
-
 
 # Node pool gerenciado
 resource "google_container_node_pool" "default_pool" {
@@ -62,6 +52,8 @@ resource "google_container_node_pool" "default_pool" {
 
   node_config {
     machine_type = var.node_machine_type
+    disk_type      = "pd-standard" 
+    disk_size_gb   = 50 
     oauth_scopes = [
       "https://www.googleapis.com/auth/cloud-platform"
     ]
@@ -79,3 +71,13 @@ resource "google_container_node_pool" "default_pool" {
   }
 }
 
+
+resource "kubernetes_namespace" "tekton" {
+  metadata { name = "tekton" }
+  depends_on = [google_container_node_pool.default_pool]   # ensure cluster exists first
+}
+
+resource "kubernetes_namespace" "application" {
+  metadata { name = "application" }
+  depends_on = [google_container_node_pool.default_pool]
+}
