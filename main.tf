@@ -1,6 +1,7 @@
 # APIs necessárias
 resource "google_project_service" "required" {
   for_each = toset([
+    "cloudresourcemanager.googleapis.com",
     "container.googleapis.com",
     "compute.googleapis.com",
     "iam.googleapis.com",
