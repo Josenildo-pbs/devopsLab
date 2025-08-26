@@ -1,0 +1,11 @@
+project_id        = "mentoring-470214"
+region            = "us-east1"
+zone              = "us-east1-b"
+cluster_name      = "dev-gke"
+network_name      = "dev-vpc"
+subnet_name       = "dev-subnet"
+subnet_cidr       = "10.10.0.0/24"
+ip_range_pods     = "10.20.0.0/16"
+ip_range_services = "10.30.0.0/20"
+node_count        = 2
+node_machine_type = "e2-standard-2"

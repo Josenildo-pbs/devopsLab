@@ -1,0 +1,62 @@
+name: Terraform Apply
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+
+    # For most SA key auth flows, no special OIDC permissions needed
+    permissions:
+      contents: read
+
+    env:
+      TF_IN_AUTOMATION: "true"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
+
+      # Authenticate to GCP using the service account JSON stored in the GCP_SA_KEY secret
+      - name: Google Auth (SA key)
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      # Optional but useful to have gcloud available (diagnostics, etc.)
+      - name: Install gcloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      # Cache Terraform providers to speed up runs
+      - name: Cache .terraform providers
+        uses: actions/cache@v4
+        with:
+          path: |
+            .terraform
+            ~/.terraform.d/plugin-cache
+          key: ${{ runner.os }}-tf-${{ hashFiles('**/.terraform.lock.hcl') }}
+          restore-keys: |
+            ${{ runner.os }}-tf-
+
+      - name: Terraform Init
+        run: terraform init -input=false
+
+      - name: Terraform Validate
+        run: terraform validate
+
+      - name: Select/Create Workspace
+        run: terraform workspace select dev || terraform workspace new dev
+
+      - name: Terraform Plan
+        run: terraform plan -input=false -var-file=env/dev.tfvars -out=tfplan
+
+      - name: Terraform Apply
+        run: terraform apply -input=false -auto-approve tfplan
