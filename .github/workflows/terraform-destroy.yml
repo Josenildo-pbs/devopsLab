@@ -13,10 +13,13 @@ on:
 
 jobs:
   destroy:
-    if: ${{ github.event.inputs.confirm == 'DESTROY my infra' }}
+    if: ${{ github.event.inputs.confirm == 'DESTROY' }}
     runs-on: ubuntu-latest
     env:
       TF_IN_AUTOMATION: "true"
+
+    permissions:
+      contents: read
 
     steps:
       - name: Checkout
@@ -28,7 +31,6 @@ jobs:
           terraform_wrapper: false
   
       - name: Google Auth (SA key)
-        if: ${{ secrets.GCP_SA_KEY != '' }}
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
