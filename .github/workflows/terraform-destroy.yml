@@ -1,0 +1,50 @@
+name: Terraform Destroy
+
+on:
+  workflow_dispatch:
+    inputs:
+      workspace:
+        description: 'Terraform workspace to destroy'
+        required: true
+        default: 'dev'
+      confirm:
+        description: 'Type exactly: DESTROY my infra'
+        required: true
+
+jobs:
+  destroy:
+    if: ${{ github.event.inputs.confirm == 'DESTROY my infra' }}
+    runs-on: ubuntu-latest
+    env:
+      TF_IN_AUTOMATION: "true"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
+  
+      - name: Google Auth (SA key)
+        if: ${{ secrets.GCP_SA_KEY != '' }}
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Install gcloud (optional)
+        uses: google-github-actions/setup-gcloud@v2
+
+
+      - name: Terraform Init (backend from secrets optional)
+        run: terraform init -input=false
+
+      - name: Select/Create Workspace
+        run: terraform workspace select "${{ github.event.inputs.workspace }}" || terraform workspace new "${{ github.event.inputs.workspace }}"
+
+      - name: Terraform Plan Destroy
+        run: terraform plan -destroy -input=false -var-file="env/${{ github.event.inputs.workspace }}.tfvars" -out=tfplan_destroy
+
+      - name: Terraform Destroy (Auto-approve)
+        run: terraform apply -input=false -auto-approve tfplan_destroy
