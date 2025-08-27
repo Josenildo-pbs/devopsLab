@@ -17,6 +17,7 @@ resource "google_container_cluster" "gke" {
   name     = var.cluster_name
   location = var.region
 
+  deletion_protection = false
   network    = google_compute_network.vpc.self_link
   subnetwork = google_compute_subnetwork.subnet.self_link
 
